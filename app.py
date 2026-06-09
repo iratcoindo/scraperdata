@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("📚 OpenAlex Literature Review Assistant")
+st.title("📚 Subangkit Literature Review Assistant")
 
 st.write(
     "Cari artikel ilmiah open-access dan buat ringkasan literatur otomatis."
