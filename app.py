@@ -485,8 +485,24 @@ if st.button("Search"):
             "Centrality Ranking"
         )
 
-        centrality = nx.degree_centrality(
-            G_filtered
+        centrality = nx.eigenvector_centrality(
+            G_filtered,
+            max_iter=1000
+        )
+        sizes = [
+
+            500 + 30000*centrality[n]
+        
+            for n in G_filtered.nodes()
+        
+        ]
+        nx.draw_networkx_nodes(
+            G_filtered,
+            pos,
+            node_size=sizes,
+            node_color=colors,
+            cmap=plt.cm.Set3,
+            alpha=0.9
         )
 
         central_df = pd.DataFrame({
