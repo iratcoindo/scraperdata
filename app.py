@@ -225,10 +225,29 @@ wc = WordCloud(
 )
 
 fig, ax = plt.subplots(
-    figsize=(12,6)
+    figsize=(12,10)
 )
 
-ax.imshow(wc)
+nx.draw_networkx_nodes(
+    G_filtered,
+    pos,
+    node_size=sizes,
+    node_color=colors,
+    cmap=plt.cm.Set3
+)
+
+nx.draw_networkx_edges(
+    G_filtered,
+    pos,
+    alpha=0.3
+)
+
+nx.draw_networkx_labels(
+    G_filtered,
+    pos,
+    labels=labels,
+    font_size=10
+)
 
 ax.axis("off")
 
@@ -271,7 +290,7 @@ for abstract in df["Abstract"]:
             G.add_edge(
                 a,
                 b,
-                weight=1
+                weight=>5
             )
 
 partition = community_louvain.best_partition(
