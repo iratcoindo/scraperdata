@@ -491,16 +491,29 @@ if st.button("Search"):
             G_filtered,
             max_iter=1000
         )
+
+        cvals = np.array(
+            list(centrality.values())
+        )
+        
+        cmin = cvals.min()
+        cmax = cvals.max()
+        
+        node_sizes = []
+        
+        for n in G_filtered.nodes():
+        
+            size = 200 + (
+                (centrality[n] - cmin)
+                /
+                (cmax - cmin + 1e-9)
+            ) * 5000
+        
+            node_sizes.append(size)
         nx.draw_networkx_nodes(
             G_filtered,
             pos,
-            node_size=[
-
-                50 + 8000*centrality[n]
-            
-                for n in G_filtered.nodes()
-            
-            ],
+            node_size=node_sizes,
             node_color=colors,
             cmap=plt.cm.Set3,
             alpha=0.9
