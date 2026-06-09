@@ -426,15 +426,14 @@ if st.button("Search"):
         partition = community_louvain.best_partition(
             G_filtered
         )
-
+        
         colors = [
-
+        
             partition[n]
-
+        
             for n in G_filtered.nodes()
-
+        
         ]
-
         pos = nx.spring_layout(
             G_filtered,
             seed=42
@@ -454,7 +453,9 @@ if st.button("Search"):
 
         edge_widths = [
 
-            G_filtered[u][v]["weight"] * 0.3
+            np.sqrt(
+                G_filtered[u][v]["weight"]
+            ) * 1.5
         
             for u,v in G_filtered.edges()
         
@@ -489,17 +490,16 @@ if st.button("Search"):
             G_filtered,
             max_iter=1000
         )
-        sizes = [
-
-            500 + 30000*centrality[n]
-        
-            for n in G_filtered.nodes()
-        
-        ]
         nx.draw_networkx_nodes(
             G_filtered,
             pos,
-            node_size=sizes,
+            node_size=[
+
+                50 + 8000*centrality[n]
+            
+                for n in G_filtered.nodes()
+            
+            ],
             node_color=colors,
             cmap=plt.cm.Set3,
             alpha=0.9
