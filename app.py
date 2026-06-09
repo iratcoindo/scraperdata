@@ -1,53 +1,62 @@
+
 import streamlit as st
 import requests
 import pandas as pd
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
 
-# ==========================
-# CONFIG
-# ==========================
+from pyvis.network import Network
+from wordcloud import WordCloud
+from community import community_louvain
+
+from collections import Counter
+from itertools import combinations
+import tempfile
+import re
 
 st.set_page_config(
-    page_title="Literature Review Assistant",
-    page_icon="📚",
+    page_title="OpenAlex SLR Dashboard",
     layout="wide"
 )
 
-st.title("📚 Subangkit Literature Review Assistant")
+st.title("OpenAlex SLR Dashboard")
 
-st.write(
-    "Cari artikel ilmiah open-access dan buat ringkasan literatur otomatis."
+keyword1 = st.text_input("Keyword 1")
+keyword2 = st.text_input("Keyword 2")
+keyword3 = st.text_input("Keyword 3")
+
+start_year = st.number_input(
+    "Start Year",
+    1900,
+    2100,
+    2015
 )
 
-# ==========================
-# INPUT
-# ==========================
-
-keyword = st.text_input(
-    "Keyword",
-    placeholder="contoh: wildlife conservation fibroblast"
+end_year = st.number_input(
+    "End Year",
+    1900,
+    2100,
+    2026
 )
 
-jumlah = st.slider(
-    "Jumlah artikel",
-    10,
-    100,
-    30
+n_articles = st.slider(
+    "Articles",
+    20,
+    300,
+    100
 )
 
-# ==========================
-# FUNCTION
-# ==========================
-
-def reconstruct_abstract(inv_index):
-
-    if not inv_index:
+def reconstruct_abstract(inv):
+    if not inv:
         return ""
 
     words = []
 
-    for word, positions in inv_index.items():
-
-        for pos in positions:
+    for word, pos_list in inv.items():
+        for pos in pos_list:
             words.append((pos, word))
 
     words.sort()
@@ -56,192 +65,356 @@ def reconstruct_abstract(inv_index):
         word for pos, word in words
     )
 
+query = " ".join(
+    [
+        keyword1,
+        keyword2,
+        keyword3
+    ]
+)
 
-def create_summary(text, max_words=500):
-
-    if not text:
-        return "Tidak ada abstrak yang tersedia."
-
-    words = text.split()
-
-    if len(words) <= max_words:
-        return text
-
-    return " ".join(words[:max_words]) + " ..."
-
-
-# ==========================
-# SEARCH
-# ==========================
-
-if st.button("🔍 Search Literature"):
-
-    if not keyword:
-
-        st.warning(
-            "Masukkan keyword terlebih dahulu."
-        )
-
-        st.stop()
+if st.button("Search"):
 
     url = (
         "https://api.openalex.org/works"
-        f"?search={keyword}"
-        f"&per-page={jumlah}"
+        f"?search={query}"
+        f"&per-page={n_articles}"
     )
 
-    with st.spinner("Mengambil data dari OpenAlex..."):
-
-        r = requests.get(
-            url,
-            timeout=30
-        )
-
-    if r.status_code != 200:
-
-        st.error(
-            f"Gagal mengambil data. Status code: {r.status_code}"
-        )
-
-        st.stop()
+    r = requests.get(url)
 
     results = r.json()["results"]
 
-    data = []
+records = []
 
-    all_abstracts = []
+for paper in results:
 
-    for paper in results:
+    year = paper.get(
+        "publication_year"
+    )
 
-        try:
+    if (
+        year < start_year
+        or
+        year > end_year
+    ):
+        continue
 
-            journal = ""
+    abstract = reconstruct_abstract(
+        paper.get(
+            "abstract_inverted_index"
+        )
+    )
 
-            if paper.get("primary_location"):
+    title = paper.get(
+        "title",
+        ""
+    )
 
-                source = paper["primary_location"].get(
-                    "source"
-                )
+    citations = paper.get(
+        "cited_by_count",
+        0
+    )
 
-                if source:
-                    journal = source.get(
-                        "display_name",
-                        ""
-                    )
+    journal = ""
 
-            abstract = reconstruct_abstract(
-                paper.get(
-                    "abstract_inverted_index"
-                )
-            )
+    if paper.get(
+        "primary_location"
+    ):
 
-            doi = paper.get(
-                "doi",
+        source = paper[
+            "primary_location"
+        ].get(
+            "source"
+        )
+
+        if source:
+            journal = source.get(
+                "display_name",
                 ""
             )
 
-            citations = paper.get(
-                "cited_by_count",
-                0
+    records.append({
+        "Title": title,
+        "Year": year,
+        "Journal": journal,
+        "Citations": citations,
+        "Abstract": abstract
+    })
+
+df = pd.DataFrame(records)
+
+st.dataframe(df)
+
+csv = df.to_csv(
+    index=False
+).encode(
+    "utf-8-sig"
+)
+
+st.download_button(
+    "Download CSV",
+    csv,
+    "literature.csv"
+)
+
+trend = (
+    df.groupby("Year")
+    .size()
+    .reset_index(
+        name="Count"
+    )
+)
+
+fig = px.line(
+    trend,
+    x="Year",
+    y="Count",
+    title="Publication Trend"
+)
+
+st.plotly_chart(fig)
+
+top_journal = (
+    df["Journal"]
+    .value_counts()
+    .head(15)
+)
+
+st.bar_chart(
+    top_journal
+)
+
+text = " ".join(
+    (
+        df["Title"]
+        .fillna("")
+        + " "
+        + df["Abstract"]
+        .fillna("")
+    )
+)
+
+words = re.findall(
+    r"[A-Za-z]+",
+    text.lower()
+)
+
+stopwords = {
+    "the","and","for",
+    "with","from","that",
+    "this","were","have",
+    "been","using","into"
+}
+
+keywords = [
+    w for w in words
+    if len(w) > 3
+    and w not in stopwords
+]
+
+freq = Counter(
+    keywords
+)
+
+wc = WordCloud(
+    width=1200,
+    height=600
+).generate(
+    " ".join(keywords)
+)
+
+fig, ax = plt.subplots(
+    figsize=(12,6)
+)
+
+ax.imshow(wc)
+
+ax.axis("off")
+
+st.pyplot(fig)
+
+top_words = [
+    w
+    for w,c
+    in freq.most_common(50)
+]
+
+G = nx.Graph()
+
+for abstract in df["Abstract"]:
+
+    abs_words = re.findall(
+        r"[A-Za-z]+",
+        str(abstract).lower()
+    )
+
+    abs_words = [
+        w
+        for w in abs_words
+        if w in top_words
+    ]
+
+    for a,b in combinations(
+        set(abs_words),
+        2
+    ):
+
+        if G.has_edge(a,b):
+
+            G[a][b][
+                "weight"
+            ] += 1
+
+        else:
+
+            G.add_edge(
+                a,
+                b,
+                weight=1
             )
 
-            year = paper.get(
-                "publication_year",
-                ""
-            )
+partition = community_louvain.best_partition(
+    G
+)
 
-            title = paper.get(
-                "title",
-                ""
-            )
+community_df = pd.DataFrame({
+    "Keyword":
+    list(
+        partition.keys()
+    ),
+    "Community":
+    list(
+        partition.values()
+    )
+})
 
-            open_access = paper.get(
-                "open_access",
-                {}
-            ).get(
-                "is_oa",
-                False
-            )
+st.dataframe(
+    community_df
+)
 
-            data.append({
+centrality = nx.degree_centrality(
+    G
+)
 
-                "Title": title,
+central_df = pd.DataFrame({
+    "Keyword":
+    list(
+        centrality.keys()
+    ),
+    "Centrality":
+    list(
+        centrality.values()
+    )
+})
 
-                "Year": year,
+central_df = (
+    central_df
+    .sort_values(
+        "Centrality",
+        ascending=False
+    )
+)
 
-                "Journal": journal,
+st.dataframe(
+    central_df.head(30)
+)
 
-                "Citations": citations,
+net = Network(
+    height="700px",
+    width="100%"
+)
 
-                "DOI": doi,
+for node in G.nodes():
 
-                "Open Access": open_access,
-
-                "Abstract": abstract
-
-            })
-
-            if abstract:
-                all_abstracts.append(
-                    abstract
-                )
-
-        except Exception:
-            pass
-
-    df = pd.DataFrame(data)
-
-    # ==========================
-    # HASIL
-    # ==========================
-
-    st.success(
-        f"Ditemukan {len(df)} artikel."
+    net.add_node(
+        node,
+        label=node,
+        group=partition[node]
     )
 
-    st.dataframe(
-        df,
-        use_container_width=True
+for edge in G.edges():
+
+    net.add_edge(
+        edge[0],
+        edge[1]
     )
 
-    # ==========================
-    # SUMMARY
-    # ==========================
+tmp = tempfile.NamedTemporaryFile(
+    delete=False,
+    suffix=".html"
+)
 
-    st.subheader(
-        "📖 Literature Summary (~500 words)"
+net.save_graph(
+    tmp.name
+)
+
+html = open(
+    tmp.name,
+    encoding="utf-8"
+).read()
+
+st.components.v1.html(
+    html,
+    height=700
+)
+
+nodes = list(
+    G.nodes()
+)
+
+node_index = {
+    n:i
+    for i,n
+    in enumerate(nodes)
+}
+
+source = []
+target = []
+value = []
+
+for u,v,d in G.edges(
+    data=True
+):
+
+    source.append(
+        node_index[u]
     )
 
-    combined_text = " ".join(
-        all_abstracts
+    target.append(
+        node_index[v]
     )
 
-    summary = create_summary(
-        combined_text,
-        max_words=500
+    value.append(
+        d["weight"]
     )
 
-    st.text_area(
-        "Summary",
-        summary,
-        height=400
-    )
-
-    # ==========================
-    # DOWNLOAD CSV
-    # ==========================
-
-    csv = df.to_csv(
-        index=False
-    ).encode(
-        "utf-8-sig"
-    )
-
-    st.download_button(
-        label="⬇ Download CSV",
-        data=csv,
-        file_name=(
-            f"{keyword.replace(' ','_')}_literature.csv"
+fig = go.Figure(
+    go.Sankey(
+        node=dict(
+            label=nodes
         ),
-        mime="text/csv"
+        link=dict(
+            source=source,
+            target=target,
+            value=value
+        )
+    )
+)
+
+st.plotly_chart(fig)
+
+st.subheader(
+    "Research Gap"
+)
+
+least_common = (
+    freq.most_common()
+    [-20:]
+)
+
+for word,count in least_common:
+
+    st.write(
+        f"- {word}"
     )
