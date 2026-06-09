@@ -553,33 +553,20 @@ if st.button("Search"):
         )
     
         nx.draw_networkx_edges(
-    
             G_filtered,
-    
             pos,
-    
             width=edge_widths,
-    
-            edge_color="gray",
-    
-            alpha=0.35
-    
+            edge_color="#6c757d",
+            alpha=0.15
         )
     
         nx.draw_networkx_nodes(
-    
             G_filtered,
-    
             pos,
-    
             node_size=node_sizes,
-    
             node_color=colors,
-    
             cmap=plt.cm.Set3,
-    
             edgecolors="black",
-    
             linewidths=0.5
     
         )
