@@ -503,13 +503,14 @@ if st.button("Search"):
         
         for n in G_filtered.nodes():
         
-            size = 200 + (
+            size = 50 + (
                 (centrality[n] - cmin)
                 /
                 (cmax - cmin + 1e-9)
-            ) * 5000
+            ) ** 2 * 10000
         
             node_sizes.append(size)
+
         nx.draw_networkx_nodes(
             G_filtered,
             pos,
