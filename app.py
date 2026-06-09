@@ -333,134 +333,68 @@ if st.button("Search"):
     st.pyplot(fig)
 
     # ==========================
-    # CENTRALITY
-    # ==========================
-
-    st.subheader(
-        "Centrality Ranking"
-    )
-
-    centrality = nx.eigenvector_centrality(
-        G_filtered,
-        max_iter=1000
-    )
-
-    cvals = np.array(
-        list(centrality.values())
-    )
-    
-    cmin = cvals.min()
-    cmax = cvals.max()
-    
-    node_sizes = []
-    
-    for n in G_filtered.nodes():
-    
-        size = 50 + (
-            (centrality[n] - cmin)
-            /
-            (cmax - cmin + 1e-9)
-        ) ** 2 * 10000
-    
-        node_sizes.append(size)
-
-    nx.draw_networkx_nodes(
-        G_filtered,
-        pos,
-        node_size=node_sizes,
-        node_color=colors,
-        cmap=plt.cm.Set3,
-        alpha=0.9
-    )
-
-    central_df = pd.DataFrame({
-
-        "Keyword":
-        list(
-            centrality.keys()
-        ),
-
-        "Centrality":
-        list(
-            centrality.values()
-        )
-
-    })
-
-    central_df = (
-        central_df
-        .sort_values(
-            "Centrality",
-            ascending=False
-        )
-    )
-
-    st.dataframe(
-        central_df.head(20)
-    )
-
-    # ==========================
     # NETWORK ANALYSIS
     # ==========================
-
+    
     st.subheader(
         "Keyword Network"
     )
-
+    
     top_words = [
-
+    
         w
-
+    
         for w,c
-
+    
         in freq.most_common(30)
-
+    
     ]
-
+    
     G = nx.Graph()
-
+    
     for abstract in df["Abstract"]:
-
+    
         abs_words = re.findall(
             r"[A-Za-z]+",
             str(abstract).lower()
         )
-
+    
         abs_words = [
-
+    
             w
-
+    
             for w in abs_words
-
+    
             if w in top_words
-
+    
         ]
-
+    
         for a,b in combinations(
             set(abs_words),
             2
         ):
-
+    
             if G.has_edge(
                 a,
                 b
             ):
-
-                G[a][b][
-                    "weight"
-                ] += 1
-
+    
+                G[a][b]["weight"] += 1
+    
             else:
-
+    
                 G.add_edge(
                     a,
                     b,
                     weight=1
                 )
-
-    # FILTER EDGE
+    
+    # ==========================
+    # FILTER STRONGEST EDGES
+    # ==========================
+    
     all_edges = []
-
+    
     for u,v,d in G.edges(data=True):
     
         all_edges.append(
@@ -473,10 +407,10 @@ if st.button("Search"):
         reverse=True
     )
     
-    top_edges = all_edges[:80]
-
+    top_edges = all_edges[:40]
+    
     G_filtered = nx.Graph()
-
+    
     for u,v,w in top_edges:
     
         G_filtered.add_edge(
@@ -484,67 +418,220 @@ if st.button("Search"):
             v,
             weight=w
         )
-
-    # COMMUNITY
-
-    if len(
-        G_filtered.nodes()
-    ) > 0:
-
+    
+    if len(G_filtered.nodes()) > 0:
+    
+        # ==========================
+        # COMMUNITY
+        # ==========================
+    
         partition = community_louvain.best_partition(
             G_filtered
         )
-        
+    
         colors = [
-        
+    
             partition[n]
-        
+    
             for n in G_filtered.nodes()
-        
+    
         ]
+    
+        # ==========================
+        # CENTRALITY
+        # ==========================
+    
+        centrality = nx.eigenvector_centrality(
+            G_filtered,
+            max_iter=1000
+        )
+    
+        cvals = np.array(
+            list(
+                centrality.values()
+            )
+        )
+    
+        cmin = cvals.min()
+    
+        cmax = cvals.max()
+    
+        node_sizes = []
+    
+        for n in G_filtered.nodes():
+    
+            size = 100 + (
+    
+                (centrality[n]-cmin)
+    
+                /
+    
+                (cmax-cmin+1e-9)
+    
+            )**2 * 12000
+    
+            node_sizes.append(size)
+    
+        # ==========================
+        # EDGE WIDTH
+        # ==========================
+    
+        weights = np.array([
+    
+            d["weight"]
+    
+            for _,_,d
+    
+            in G_filtered.edges(data=True)
+    
+        ])
+    
+        wmin = weights.min()
+    
+        wmax = weights.max()
+    
+        edge_widths = []
+    
+        for u,v,d in G_filtered.edges(data=True):
+    
+            width = 0.5 + (
+    
+                (d["weight"]-wmin)
+    
+                /
+    
+                (wmax-wmin+1e-9)
+    
+            ) * 10
+    
+            edge_widths.append(width)
+    
+        # ==========================
+        # LABELS
+        # ==========================
+    
+        top_nodes = sorted(
+    
+            centrality,
+    
+            key=centrality.get,
+    
+            reverse=True
+    
+        )[:12]
+    
+        labels = {
+    
+            n:n
+    
+            for n in top_nodes
+    
+        }
+    
+        # ==========================
+        # LAYOUT
+        # ==========================
+    
         pos = nx.spring_layout(
+    
             G_filtered,
-            seed=42
+    
+            seed=42,
+    
+            k=2.5,
+    
+            iterations=500
+    
         )
-
+    
+        # ==========================
+        # DRAW NETWORK
+        # ==========================
+    
         fig, ax = plt.subplots(
-            figsize=(12,10)
+            figsize=(14,10)
         )
-
-        nx.draw_networkx_nodes(
-            G_filtered,
-            pos,
-            node_color=colors,
-            cmap=plt.cm.Set3,
-            node_size=500
-        )
-
-        edge_widths = [
-
-            np.sqrt(
-                G_filtered[u][v]["weight"]
-            ) * 1.5
-        
-            for u,v in G_filtered.edges()
-        
-        ]
-        
+    
         nx.draw_networkx_edges(
+    
             G_filtered,
+    
             pos,
+    
             width=edge_widths,
-            alpha=0.4
+    
+            edge_color="gray",
+    
+            alpha=0.35
+    
         )
-
-        nx.draw_networkx_labels(
+    
+        nx.draw_networkx_nodes(
+    
             G_filtered,
+    
             pos,
-            font_size=8
+    
+            node_size=node_sizes,
+    
+            node_color=colors,
+    
+            cmap=plt.cm.Set3,
+    
+            edgecolors="black",
+    
+            linewidths=0.5
+    
         )
-
+    
+        nx.draw_networkx_labels(
+    
+            G_filtered,
+    
+            pos,
+    
+            labels=labels,
+    
+            font_size=10,
+    
+            font_weight="bold"
+    
+        )
+    
         ax.axis("off")
-
+    
         st.pyplot(fig)
+    
+        # ==========================
+        # CENTRALITY TABLE
+        # ==========================
+    
+        st.subheader(
+            "Centrality Ranking"
+        )
+    
+        central_df = pd.DataFrame({
+    
+            "Keyword":
+            list(
+                centrality.keys()
+            ),
+    
+            "Centrality":
+            list(
+                centrality.values()
+            )
+    
+        })
+    
+        central_df = central_df.sort_values(
+            "Centrality",
+            ascending=False
+        )
+    
+        st.dataframe(
+            central_df.head(20)
+        )
 
         
 
