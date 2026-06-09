@@ -223,7 +223,17 @@ wc = WordCloud(
 ).generate(
     " ".join(keywords)
 )
+G_filtered = nx.Graph()
 
+for u, v, d in G.edges(data=True):
+
+    if d["weight"] >= 5:
+
+        G_filtered.add_edge(
+            u,
+            v,
+            weight=d["weight"]
+        )
 fig, ax = plt.subplots(
     figsize=(12,10)
 )
