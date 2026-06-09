@@ -6,7 +6,9 @@ import time
 # ========================
 # INPUT ISU
 # ========================
-isu = input("Masukkan isu: ")
+import streamlit as st
+
+isu = st.text_input("Masukkan isu")
 
 # ========================
 # SEARCH DETIK
