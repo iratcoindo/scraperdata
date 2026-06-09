@@ -398,7 +398,7 @@ if st.button("Search"):
         data=True
     ):
 
-        if d["weight"] >= 3:
+        if d["weight"] >= 20:
 
             G_filtered.add_edge(
                 u,
