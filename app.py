@@ -4,6 +4,7 @@ import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 import plotly.express as px
+import numpy as np
 
 from wordcloud import WordCloud
 from community import community_louvain
