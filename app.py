@@ -391,20 +391,31 @@ if st.button("Search"):
                 )
 
     # FILTER EDGE
+    all_edges = []
+
+    for u,v,d in G.edges(data=True):
+    
+        all_edges.append(
+            (u,v,d["weight"])
+        )
+    
+    all_edges = sorted(
+        all_edges,
+        key=lambda x:x[2],
+        reverse=True
+    )
+    
+    top_edges = all_edges[:80]
 
     G_filtered = nx.Graph()
 
-    for u,v,d in G.edges(
-        data=True
-    ):
-
-        if d["weight"] >= 20:
-
-            G_filtered.add_edge(
-                u,
-                v,
-                weight=d["weight"]
-            )
+    for u,v,w in top_edges:
+    
+        G_filtered.add_edge(
+            u,
+            v,
+            weight=w
+        )
 
     # COMMUNITY
 
@@ -441,10 +452,19 @@ if st.button("Search"):
             node_size=500
         )
 
+        edge_widths = [
+
+            G_filtered[u][v]["weight"] * 0.3
+        
+            for u,v in G_filtered.edges()
+        
+        ]
+        
         nx.draw_networkx_edges(
             G_filtered,
             pos,
-            alpha=0.3
+            width=edge_widths,
+            alpha=0.4
         )
 
         nx.draw_networkx_labels(
