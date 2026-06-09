@@ -290,7 +290,7 @@ for abstract in df["Abstract"]:
             G.add_edge(
                 a,
                 b,
-                weight=>5
+                weight>=5
             )
 
 partition = community_louvain.best_partition(
