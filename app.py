@@ -22,7 +22,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("📚 OpenAlex SLR Dashboard")
+st.title("📚 SUBANGKIT SLR Dashboard")
 
 # ==========================
 # INPUT
@@ -333,6 +333,73 @@ if st.button("Search"):
     st.pyplot(fig)
 
     # ==========================
+    # CENTRALITY
+    # ==========================
+
+    st.subheader(
+        "Centrality Ranking"
+    )
+
+    centrality = nx.eigenvector_centrality(
+        G_filtered,
+        max_iter=1000
+    )
+
+    cvals = np.array(
+        list(centrality.values())
+    )
+    
+    cmin = cvals.min()
+    cmax = cvals.max()
+    
+    node_sizes = []
+    
+    for n in G_filtered.nodes():
+    
+        size = 50 + (
+            (centrality[n] - cmin)
+            /
+            (cmax - cmin + 1e-9)
+        ) ** 2 * 10000
+    
+        node_sizes.append(size)
+
+    nx.draw_networkx_nodes(
+        G_filtered,
+        pos,
+        node_size=node_sizes,
+        node_color=colors,
+        cmap=plt.cm.Set3,
+        alpha=0.9
+    )
+
+    central_df = pd.DataFrame({
+
+        "Keyword":
+        list(
+            centrality.keys()
+        ),
+
+        "Centrality":
+        list(
+            centrality.values()
+        )
+
+    })
+
+    central_df = (
+        central_df
+        .sort_values(
+            "Centrality",
+            ascending=False
+        )
+    )
+
+    st.dataframe(
+        central_df.head(20)
+    )
+
+    # ==========================
     # NETWORK ANALYSIS
     # ==========================
 
@@ -479,72 +546,7 @@ if st.button("Search"):
 
         st.pyplot(fig)
 
-        # ==========================
-        # CENTRALITY
-        # ==========================
-
-        st.subheader(
-            "Centrality Ranking"
-        )
-
-        centrality = nx.eigenvector_centrality(
-            G_filtered,
-            max_iter=1000
-        )
-
-        cvals = np.array(
-            list(centrality.values())
-        )
         
-        cmin = cvals.min()
-        cmax = cvals.max()
-        
-        node_sizes = []
-        
-        for n in G_filtered.nodes():
-        
-            size = 50 + (
-                (centrality[n] - cmin)
-                /
-                (cmax - cmin + 1e-9)
-            ) ** 2 * 10000
-        
-            node_sizes.append(size)
-
-        nx.draw_networkx_nodes(
-            G_filtered,
-            pos,
-            node_size=node_sizes,
-            node_color=colors,
-            cmap=plt.cm.Set3,
-            alpha=0.9
-        )
-
-        central_df = pd.DataFrame({
-
-            "Keyword":
-            list(
-                centrality.keys()
-            ),
-
-            "Centrality":
-            list(
-                centrality.values()
-            )
-
-        })
-
-        central_df = (
-            central_df
-            .sort_values(
-                "Centrality",
-                ascending=False
-            )
-        )
-
-        st.dataframe(
-            central_df.head(20)
-        )
 
     # ==========================
     # RESEARCH GAP
