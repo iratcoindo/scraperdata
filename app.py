@@ -620,7 +620,125 @@ if st.button("Search"):
             central_df.head(20)
         )
 
-        
+    # ==========================
+    # NETWORK INTERPRETATION
+    # ==========================
+    
+    st.subheader(
+        "Network Analysis Interpretation"
+    )
+    
+    top_keyword = central_df.iloc[0]["Keyword"]
+    
+    top_centrality = central_df.iloc[0]["Centrality"]
+    
+    n_nodes = G_filtered.number_of_nodes()
+    
+    n_edges = G_filtered.number_of_edges()
+    
+    n_clusters = len(
+        set(partition.values())
+    )
+    
+    cluster_sizes = {}
+    
+    for node, cluster in partition.items():
+    
+        cluster_sizes.setdefault(
+            cluster,
+            0
+        )
+    
+        cluster_sizes[cluster] += 1
+    
+    largest_cluster = max(
+        cluster_sizes,
+        key=cluster_sizes.get
+    )
+    
+    largest_cluster_size = cluster_sizes[
+        largest_cluster
+    ]
+    
+    top_keywords = (
+        central_df
+        .head(10)["Keyword"]
+        .tolist()
+    )
+    
+    interpretation = f"""
+    The keyword co-occurrence network consisted of
+    {n_nodes} nodes and {n_edges} edges,
+    indicating the existence of multiple thematic
+    relationships among the most frequently occurring
+    terms extracted from the retrieved literature.
+    
+    Community detection analysis identified
+    {n_clusters} major thematic clusters.
+    The largest cluster contained
+    {largest_cluster_size} keywords,
+    suggesting a dominant research theme within the field.
+    
+    The most influential keyword based on eigenvector
+    centrality was '{top_keyword}'
+    (centrality = {top_centrality:.3f}).
+    This finding indicates that the keyword occupies
+    a strategic position in the network and is strongly
+    connected to other highly influential concepts.
+    
+    Other highly central keywords included:
+    
+    {", ".join(top_keywords)}.
+    
+    The presence of these highly connected keywords
+    suggests that current research is concentrated around
+    a limited number of core concepts that form the
+    intellectual structure of the field.
+    
+    The network topology demonstrates that certain
+    keywords act as bridges connecting otherwise separate
+    research themes. Such bridging concepts often represent
+    multidisciplinary topics and may indicate areas where
+    future innovation and collaboration are likely to emerge.
+    
+    The community structure further reveals thematic
+    specialization among research groups.
+    Clusters may represent distinct scientific topics,
+    methodological approaches, biological processes,
+    or application areas depending on the search query.
+    
+    The relatively strong connections among central nodes
+    indicate a mature and interconnected research area,
+    whereas peripheral nodes with lower centrality may
+    represent emerging topics, niche applications,
+    or underexplored research directions.
+    
+    From a bibliometric perspective, the network suggests
+    that knowledge production is organized around several
+    core concepts, while additional peripheral concepts
+    provide opportunities for expansion and interdisciplinary
+    integration.
+    
+    Potential future research directions can be inferred
+    from low-frequency keywords and weakly connected nodes,
+    which may represent gaps in the literature.
+    These topics are currently less integrated into the
+    mainstream research network and therefore offer
+    opportunities for novel contributions.
+    
+    Overall, the keyword co-occurrence network reveals
+    the conceptual structure of the literature,
+    identifies dominant research themes,
+    highlights influential concepts,
+    and provides evidence-based insights regarding
+    future research priorities.
+    """
+    
+    st.text_area(
+        "Interpretation",
+        interpretation,
+        height=500
+    )
 
     # ==========================
     # RESEARCH GAP
