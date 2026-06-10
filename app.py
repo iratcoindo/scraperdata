@@ -569,22 +569,9 @@ if st.button("Search"):
         # LABELS
         # ==========================
     
-        top_nodes = sorted(
-    
-            centrality,
-    
-            key=centrality.get,
-    
-            reverse=True
-    
-        )[:12]
-    
         labels = {
-    
-            n:n
-    
-            for n in top_nodes
-    
+            node: node
+            for node in G_filtered.nodes()
         }
     
         # ==========================
@@ -631,17 +618,17 @@ if st.button("Search"):
         )
     
         nx.draw_networkx_labels(
-    
+
             G_filtered,
-    
+        
             pos,
-    
+        
             labels=labels,
-    
-            font_size=10,
-    
+        
+            font_size=8,
+        
             font_weight="bold"
-    
+        
         )
     
         ax.axis("off")
