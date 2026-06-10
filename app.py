@@ -16,6 +16,71 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import TruncatedSVD
 import plotly.graph_objects as go
+import nltk
+from nltk.corpus import stopwords
+
+nltk.download(
+    "stopwords",
+    quiet=True
+)
+
+nltk_stopwords = set(
+    stopwords.words("english")
+)
+
+academic_stopwords = {
+
+    "study",
+    "studies",
+    "research",
+    "review",
+    "reviews",
+    "paper",
+    "article",
+    "articles",
+    "author",
+    "authors",
+    "based",
+    "recent",
+    "current",
+    "potential",
+    "including",
+    "approach",
+    "approaches",
+    "method",
+    "methods",
+    "result",
+    "results",
+    "conclusion",
+    "conclusions",
+    "application",
+    "applications",
+    "development",
+    "developments",
+    "use",
+    "used",
+    "using",
+    "show",
+    "shows",
+    "shown",
+    "new",
+    "novel",
+    "important",
+    "significant",
+    "various",
+    "different",
+    "associated",
+    "related",
+    "also",
+    "more",
+    "well",
+    "known"
+
+}
+
+nltk_stopwords.update(
+    academic_stopwords
+)
 
 # ==========================
 # CONFIG
