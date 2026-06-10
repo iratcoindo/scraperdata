@@ -26,7 +26,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("📚 DRAMAGA SLR Dashboard")
+st.title("🇮🇩 DRAMAGA SLR Dashboard")
 
 # ==========================
 # INPUT
