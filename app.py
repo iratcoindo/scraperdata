@@ -12,6 +12,10 @@ from community import community_louvain
 from collections import Counter
 from itertools import combinations
 import re
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import TruncatedSVD
+import plotly.graph_objects as go
 
 # ==========================
 # CONFIG
@@ -22,7 +26,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("📚 SUBANGKIT SLR Dashboard")
+st.title("📚 DRAMAGA SLR Dashboard")
 
 # ==========================
 # INPUT
@@ -753,3 +757,239 @@ if st.button("Search"):
         st.write(
             f"• {word}"
         )
+
+    # ==========================
+    # THEMATIC MAP
+    # ==========================
+    
+    st.subheader("Thematic Map")
+    
+    theme_data = []
+    
+    for cluster_id in set(partition.values()):
+    
+        nodes = [
+    
+            n
+    
+            for n,c
+    
+            in partition.items()
+    
+            if c == cluster_id
+    
+        ]
+    
+        if len(nodes) < 2:
+            continue
+    
+        subG = G_filtered.subgraph(nodes)
+    
+        density = nx.density(subG)
+    
+        centrality_mean = np.mean(
+            [
+                centrality[n]
+                for n in nodes
+            ]
+        )
+    
+        theme_data.append({
+    
+            "Cluster": f"C{cluster_id}",
+    
+            "Density": density,
+    
+            "Centrality": centrality_mean,
+    
+            "Keywords": ", ".join(nodes[:5])
+    
+        })
+    
+    theme_df = pd.DataFrame(theme_data)
+    
+    fig = px.scatter(
+    
+        theme_df,
+    
+        x="Centrality",
+    
+        y="Density",
+    
+        size="Density",
+    
+        color="Cluster",
+    
+        hover_data=["Keywords"],
+    
+        title="Thematic Map"
+    
+    )
+    
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    # ==========================
+    # MCA
+    # ==========================
+    
+    st.subheader(
+        "Conceptual Structure Map (MCA)"
+    )
+    
+    docs = (
+        df["Title"]
+        .fillna("")
+        + " "
+        + df["Abstract"]
+        .fillna("")
+    )
+    
+    vectorizer = CountVectorizer(
+    
+        stop_words="english",
+    
+        max_features=100
+    
+    )
+    
+    X = vectorizer.fit_transform(
+        docs
+    )
+    
+    svd = TruncatedSVD(
+        n_components=2,
+        random_state=42
+    )
+    
+    coords = svd.fit_transform(
+        X.T
+    )
+    
+    terms = vectorizer.get_feature_names_out()
+    
+    mca_df = pd.DataFrame({
+    
+        "Keyword": terms,
+    
+        "Dim1": coords[:,0],
+    
+        "Dim2": coords[:,1]
+    
+    })
+    
+    fig = px.scatter(
+    
+        mca_df,
+    
+        x="Dim1",
+    
+        y="Dim2",
+    
+        text="Keyword",
+    
+        title="Conceptual Structure Map"
+    
+    )
+    
+    fig.update_traces(
+        textposition="top center"
+    )
+    
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    # ==========================
+    # SANKEY
+    # ==========================
+    
+    st.subheader(
+        "Keyword Relationship Sankey"
+    )
+    
+    top20 = [
+    
+        w
+    
+        for w,c
+    
+        in freq.most_common(20)
+    
+    ]
+    
+    nodes = top20
+    
+    node_index = {
+    
+        n:i
+    
+        for i,n
+    
+        in enumerate(nodes)
+    
+    }
+    
+    source = []
+    target = []
+    value = []
+    
+    for u,v,d in G_filtered.edges(data=True):
+    
+        if (
+    
+            u in node_index
+    
+            and
+    
+            v in node_index
+    
+        ):
+    
+            source.append(
+                node_index[u]
+            )
+    
+            target.append(
+                node_index[v]
+            )
+    
+            value.append(
+                d["weight"]
+            )
+    
+    fig = go.Figure(
+    
+        go.Sankey(
+    
+            node=dict(
+    
+                label=nodes,
+    
+                pad=20,
+    
+                thickness=20
+    
+            ),
+    
+            link=dict(
+    
+                source=source,
+    
+                target=target,
+    
+                value=value
+    
+            )
+    
+        )
+    
+    )
+    
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
