@@ -20,6 +20,23 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
+# ===============================
+# PAGE CONFIG
+# ===============================
+st.set_page_config(
+    page_title="iRATco Platform",
+    page_icon="logo.png",
+    layout="wide"
+)
+
+# HEADER
+col1, col2 = st.columns([8,2])
+with col1:
+    st.title("📊 iRATco LSR Dashboard")
+with col2:
+    st.image("logo_iratco.png", width=250)
+
+
 nltk.download("wordnet", quiet=True)
 
 lemmatizer = WordNetLemmatizer()
