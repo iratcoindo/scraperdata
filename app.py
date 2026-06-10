@@ -24,7 +24,7 @@ from nltk.stem import WordNetLemmatizer
 # PAGE CONFIG
 # ===============================
 st.set_page_config(
-    page_title="iRATco Platform",
+    page_title="iRATco SLR Dashboard",
     page_icon="logo.png",
     layout="wide"
 )
@@ -103,17 +103,6 @@ academic_stopwords = {
 nltk_stopwords.update(
     academic_stopwords
 )
-
-# ==========================
-# CONFIG
-# ==========================
-
-st.set_page_config(
-    page_title="OpenAlex SLR Dashboard",
-    layout="wide"
-)
-
-st.title("🇮🇩 DRAMAGA Systematic Literature Review Dashboard")
 
 # ==========================
 # INPUT
