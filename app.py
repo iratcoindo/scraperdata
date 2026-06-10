@@ -96,7 +96,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🇮🇩 DRAMAGA SLR Dashboard")
+st.title("🇮🇩 DRAMAGA Sysytematic Literature Review Dashboard")
 
 # ==========================
 # INPUT
