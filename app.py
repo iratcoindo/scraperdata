@@ -18,6 +18,11 @@ from sklearn.decomposition import TruncatedSVD
 import plotly.graph_objects as go
 import nltk
 from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+
+nltk.download("wordnet", quiet=True)
+
+lemmatizer = WordNetLemmatizer()
 
 nltk.download(
     "stopwords",
@@ -352,7 +357,7 @@ if st.button("Search"):
 
     keywords = [
 
-        w
+        lemmatizer.lemmatize(w)
     
         for w in words
     
@@ -413,10 +418,16 @@ if st.button("Search"):
     
     for abstract in df["Abstract"]:
     
-        abs_words = re.findall(
-            r"[A-Za-z]+",
-            str(abstract).lower()
-        )
+        abs_words = [
+
+            lemmatizer.lemmatize(w)
+        
+            for w in re.findall(
+                r"[A-Za-z]+",
+                str(abstract).lower()
+            )
+        
+        ]
     
         abs_words = [
     
