@@ -350,25 +350,15 @@ if st.button("Search"):
         text.lower()
     )
 
-    stopwords = {
-
-        "the","and","for",
-        "with","from","that",
-        "this","were","have",
-        "been","using","into",
-        "their","they","these",
-        "study","studies"
-
-    }
-
     keywords = [
 
         w
+    
         for w in words
-
-        if len(w) > 3
-        and w not in stopwords
-
+    
+        if len(w) > 4
+        and w not in nltk_stopwords
+    
     ]
 
     freq = Counter(
