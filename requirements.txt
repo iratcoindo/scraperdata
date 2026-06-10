@@ -6,5 +6,5 @@ networkx
 matplotlib
 plotly
 wordcloud
-pyvis
 python-louvain
+scikit-learn
